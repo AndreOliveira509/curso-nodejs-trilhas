@@ -1,0 +1,26 @@
+{
+  "name": "curso-nodejs-trilhas",
+  "version": "1.0.0",
+  "description": "nossa primeira API",
+  "main": "app.js",
+  "scripts": {
+  "start": "node app.js",
+  "start:dev": "nodemon app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndreOliveira509/curso-nodejs-trilhas.git"
+  },
+  "keywords": [
+    "primeira",
+    "api"
+  ],
+  "author": "André Oliveira",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AndreOliveira509/curso-nodejs-trilhas/issues"
+  },
+  "type": "module"
+  
+}
+
