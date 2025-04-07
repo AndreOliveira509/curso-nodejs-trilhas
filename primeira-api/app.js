@@ -1,6 +1,6 @@
 import http from 'http';
 import fs from 'fs';
-import rotas from './routes';
+import rotas from './routes.js';
  
 fs.writeFile('./mensagem.txt', 'Olá, Tic em trilhas do arquivo!', 'utf-8', (erro) =>{
     if (erro) {
