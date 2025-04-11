@@ -1,266 +1,190 @@
 import fs from 'fs';
-import { json } from 'stream/consumers';
+import {
+  sequelize,
+  criaProduto,
+  leProdutos,
+  leProdutoPorID,
+  atualizaProdutoPorID,
+  deletaProdutoPorID
+} from './models.js';
 
-export default function rotas(req, res, dado){
-    res.setHeader('Content-type', 'aplication/json', "utf-8");
-    
-    if(req.method === 'GET' && req.url === '/'){
+export default async function rotas(req, res, dado) {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
 
-        const { conteudo } = dado;
-        
-        res.statusCode = 200;
+  // Rota inicial
+  if (req.method === 'GET' && req.url === '/') {
+    const { conteudo } = dado;
 
-        const resposta = {
-            mensagem: conteudo
-        };
-
-        res.end(JSON.stringfy(resposta));
-
-        return;
-    }
-
-    if(req.method === 'PUT' && req.url === '/arquivos') {
-        const corpo = [];
-
-        req.on("data", () => {
-            corpo.push(parte);
-        });
-        req.on('end', () =>{
-            const arquivo = JSON.parse(corpo);
-
-            res.statusCode = 400;
-
-            if(!arquivo?.nome) {
-                const resposta = {
-                    erro: {
-                        mensagem: `o atributo não foi encontrado!`
-                    }
-                };
-                
-                res.end(JSON.stringify(resposta))
-                
-                return;
-            }
-
-            fs.writeFile(`${arquivo.nome}.txt`, arquivo?.conteudo ?? '', 'uft-8', (erro)=> {
-                if(erro){
-                    console.log('Falha ao criar arquivo', erro);
-                    res.statusCode = 500;
-
-                    const resposta = {
-                        erro: {
-                            mensagem: `Falha ao criar arquivo ${arquivo.nome}`
-                        }
-                    };
-
-                    res.end(JSON.stringify(resposta));
-                    return;
-                }
-                res.statusCode = 201;
-
-                const resposta = {
-                    mensagem: `Arquivo ${arquivo.nome} criado com sucesso!`
-                };
-                    res.end(JSON.stringify(resposta));
-                    return;
-            });
-
-        });
-        req.on('error', (erro) =>{
-            console.log('falha ao processar a requisição', erro)
-
-            res.statusCode = 400;
-
-            const resposta = {
-                erro: {
-                    mensagem: 'Falha ao processar a requisição'
-                }
-            };
-            res.end(JSON.stringify(resposta));
-            return; 
-        });
-        return;
-    };
-
-    // ================================================================================
-
-    if(req.method === 'PATCH' && req.url === '/arquivos') {
-        const corpo = [];
-
-        req.on("data", () => {
-            corpo.push(parte);
-        });
-        req.on('end', () =>{
-            const arquivo = JSON.parse(corpo);
-
-            res.statusCode = 400;
-
-            if(!arquivo?.nome) {
-                const resposta = {
-                    erro: {
-                        mensagem: `o atributo não foi encontrado!`
-                    }
-                };
-                
-                res.end(JSON.stringify(resposta))
-                
-                return;
-            }
-
-            if(!arquivo?.conteudo) {
-                const resposta = {
-                    erro: {
-                        mensagem: `o atributo 'Conteudo' não foi encontrado!`
-                    }
-                };
-                
-                res.end(JSON.stringify(resposta))
-                
-                return;
-            }
-
-            fs.access(`${arquivo.nome}.txt`, fs.constants.W_OK, (erro)=>{
-                if(erro) {
-                    console.log('Falhou ao acessar o arquivo', erro);
-                    res.statusCode = erro.code === 'ENOENT' ? 404 : 403;
-                    const resposta = {
-                        erro: {
-                            mensagem: `Falha ao acessar arquivo ${arquivo.nome}`
-                        }
-                    };
-
-                    res.end(JSON.stringify(resposta));
-
-                    return;
-                }
-                fs.appendFile(`${arquivo.nome}.txt`, `\n${arquivo.conteudo}`, 'uft-8', (erro)=> {
-                    if(erro){
-                        console.log('Falha ao atualizar arquivo', erro);
-                        res.statusCode = 500;
-    
-                        const resposta = {
-                            erro: {
-                                mensagem: `Falha ao atualizar arquivo ${arquivo.nome}`
-                            }
-                        }; 
-    
-                        res.end(JSON.stringify(resposta));
-                        return;
-                    }
-            });
-
-                res.statusCode = 200;
-
-                const resposta = {
-                    mensagem: `Arquivo ${arquivo.nome} atualizado com sucesso!`
-                };
-                    res.end(JSON.stringify(resposta));
-                    return;
-            });
-
-        });
-        req.on('error', (erro) =>{
-            console.log('falha ao processar a requisição', erro)
-
-            res.statusCode = 400;
-
-            const resposta = {
-                erro: {
-                    mensagem: 'Falha ao processar a requisição'
-                }
-            };
-            res.end(JSON.stringify(resposta));
-            return; 
-        });
-        return;
-    };
-    if(req.method === 'DELETE' && req.url === '/arquivos') {
-        const corpo = [];
-
-        req.on("data", () => {
-            corpo.push(parte);
-        });
-        req.on('end', () =>{
-            const arquivo = JSON.parse(corpo);
-
-            res.statusCode = 400;
-
-            if(!arquivo?.nome) {
-                const resposta = {
-                    erro: {
-                        mensagem: `o atributo não foi encontrado!`
-                    }
-                };
-                
-                res.end(JSON.stringify(resposta))
-                
-                return;
-            }
-
-            fs.access(`${arquivo.nome}.txt`, fs.constants.W_OK, (erro)=>{
-                if(erro) {
-                    console.log('Falhou ao acessar o arquivo', erro);
-                    res.statusCode = erro.code === 'ENOENT' ? 404 : 403;
-                    const resposta = {
-                        erro: {
-                            mensagem: `Falha ao acessar arquivo ${arquivo.nome}`
-                        }
-                    };
-
-                    res.end(JSON.stringify(resposta));
-
-                    return;
-                }
-                fs.rm(`${arquivo.nome}.txt`, (erro)=> {
-                    if(erro){
-                        console.log('Falha ao remover arquivo', erro);
-                        res.statusCode = 500;
-    
-                        const resposta = {
-                            erro: {
-                                mensagem: `Falha ao remover arquivo ${arquivo.nome}`
-                            }
-                        }; 
-    
-                        res.end(JSON.stringify(resposta));
-                        return;
-                    }
-            });
-
-                res.statusCode = 200;
-
-                const resposta = {
-                    mensagem: `Arquivo ${arquivo.nome} removido com sucesso!`
-                };
-                    res.end(JSON.stringify(resposta));
-                    return;
-            });
-
-        });
-        req.on('error', (erro) =>{
-            console.log('falha ao processar a requisição', erro)
-
-            res.statusCode = 400;
-
-            const resposta = {
-                erro: {
-                    mensagem: 'Falha ao processar a requisição'
-                }
-            };
-            res.end(JSON.stringify(resposta));
-            return; 
-        });
-        return;
-    };
-    res.statusCode = 404;
-
+    res.statusCode = 200;
     const resposta = {
-        erro: {
-            mensagem: 'Rota não encontrada!',
-            url: req.url
-        }
+      mensagem: conteudo
     };
+    res.end(JSON.stringify(resposta));
+    return;
+  }
 
-    res.end(JSON.stringfy(resposta));
+  // Criar produto
+  if (req.method === 'POST' && req.url === '/produtos') {
+    const corpo = [];
+
+    req.on('data', (parte) => {
+      corpo.push(parte);
+    });
+
+    req.on('end', async () => {
+      const produto = JSON.parse(corpo.join(''));
+
+      if (!produto?.nome) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({
+          erro: { mensagem: `O atributo 'nome' não foi encontrado!` }
+        }));
+        return;
+      }
+
+      if (!produto?.preco) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({
+          erro: { mensagem: `O atributo 'preco' não foi encontrado!` }
+        }));
+        return;
+      }
+
+      try {
+        const resposta = await criaProduto(produto);
+        res.statusCode = 201;
+        res.end(JSON.stringify(resposta));
+        return;
+      } catch (erro) {
+        console.log('Falha ao criar produto', erro);
+        res.statusCode = 500;
+        res.end(JSON.stringify({
+          erro: { mensagem: `Falha ao criar produto ${produto.nome}` }
+        }));
+        return;
+      }
+    });
+
+    req.on('error', (erro) => {
+      console.log('Falha ao processar a requisição', erro);
+      res.statusCode = 400;
+      res.end(JSON.stringify({
+        erro: { mensagem: 'Falha ao processar a requisição' }
+      }));
+    });
+
+    return;
+  }
+
+  // Atualizar produto
+  if (req.method === 'PATCH' && req.url.startsWith('/produtos/')) {
+    const id = req.url.split('/')[2];
+    if (isNaN(id)) return;
+
+    const corpo = [];
+
+    req.on('data', (parte) => {
+      corpo.push(parte);
+    });
+
+    req.on('end', async () => {
+      const produto = JSON.parse(corpo.join(''));
+
+      if (!produto?.nome && !produto?.preco) {
+        res.statusCode = 400;
+        res.end(JSON.stringify({
+          erro: { mensagem: 'Nenhum atributo encontrado!' }
+        }));
+        return;
+      }
+
+      try {
+        const resposta = await atualizaProdutoPorID(id, produto);
+        res.statusCode = 200;
+        if(!resposta) {
+            res.statusCode = 404;
+        }
+        res.end(JSON.stringify(resposta));
+        return;
+      } catch (erro) {
+        console.log('Falha ao atualizar produto', erro);
+        res.statusCode = 500;
+        res.end(JSON.stringify({
+          erro: { mensagem: `Falha ao atualizar produto ${produto.nome}` }
+        }));
+        return;
+      }
+    });
+
+    return;
+  }
+
+  // Deletar produto
+  if (req.method === 'DELETE' && req.url.startsWith('/produtos/')) {
+    const id = req.url.split('/')[2];
+    if (isNaN(id)) return;
+
+    try {
+      const encontrado = await deletaProdutoPorID(id);
+      res.statusCode = 204;
+      if(!encontrado) {
+        res.statusCode = 404;
+      }
+      res.end();
+      return;
+    } catch (erro) {
+      console.log('Falha ao remover produto', erro);
+      res.statusCode = 500;
+      res.end(JSON.stringify({
+        erro: { mensagem: `Falha ao remover produto ${id}` }
+      }));
+      return;
+    }
+  }
+
+  // Buscar produto por ID
+  if (req.method === 'GET' && req.url.startsWith('/produtos/')) { 
+    const id = req.url.split('/')[2];
+    if (isNaN(id)) return;
+
+    try {
+      const resposta = await leProdutoPorID(id);
+      res.statusCode = 200;
+      if(!resposta) {
+        res.statusCode = 404;
+      }
+      res.end(JSON.stringify(resposta));
+      return;
+    } catch (erro) {
+      console.log('Falha ao buscar produto', erro);
+      res.statusCode = 500;
+      res.end(JSON.stringify({
+        erro: { mensagem: `Falha ao buscar produto ${id}` }
+      }));
+      return;
+    }
+  }
+
+  // Listar todos os produtos
+  if (req.method === 'GET' && req.url === '/produtos') {
+    try {
+      const resposta = await leProdutos();
+      res.statusCode = 200;
+      res.end(JSON.stringify(resposta));
+      return;
+    } catch (erro) {
+      console.log('Falha ao buscar produtos', erro);
+      res.statusCode = 500;
+      res.end(JSON.stringify({
+        erro: { mensagem: 'Falha ao buscar produtos' }
+      }));
+      return;
+    }
+  }
+
+  // Rota não encontrada
+  res.statusCode = 404;
+  res.end(JSON.stringify({
+    erro: { mensagem: 'Rota não encontrada!' }
+  }));
 }
-    

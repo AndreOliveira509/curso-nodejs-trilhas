@@ -2,7 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import rotas from './routes.js';
 import sqlite3 from 'sqlite3';
-import { sequelize, criaProduto, leProdutos, leProdutoPorID, atualizaProdutoPorID, deletaProdutoPorID } from './models.js';
+import { sequelize, criaPedido, lePedidos, Produto } from './models.js';
 
 const db = new sqlite3.Database('./tic.bd', (erro)=>{
     if(erro) {
@@ -33,6 +33,8 @@ fs.readFile ('./mensagem.txt', 'utf-8', (erro, conteudo) =>{
 
 async function iniciaServidorHttp(mensagem){
     await sequelize.sync();
+    await criaPedido({ valorTotal: 13.00, produtos: [{ id: 2, quantidade: 1 }, { id: 4, quantidade: 2}] });
+    await lePedidos();
 
     await criaProduto({
         nome: 'Açai tradicional',
@@ -42,12 +44,7 @@ async function iniciaServidorHttp(mensagem){
         nome: 'Açai com granola',
         preco: 12.50
     });
-    await leProdutos(); 
-    await leProdutoPorID(2);
-    await leProdutoPorID(20);
-    await atualizaProdutoPorID(2, { preco: 13.00 });
-    await deletaProdutoPorID(1)
-    await leProdutos(); 
+    
 
 
     const servidor = http.createServer((req, res) => {  
